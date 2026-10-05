@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Task Planner & Executive Report</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+        .drag-over {
+            border-style: dashed !important;
+            border-color: #0ea5e9 !important;
+            background-color: rgba(14, 165, 233, 0.08) !important;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.6);
+        }
+
+        /* Printable Executive Report Layout */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .print-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 1rem !important;
+            }
+            .day-card {
+                break-inside: avoid;
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+            }
+            #reportModal {
+                position: static !important;
+                background: white !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+            }
+            #reportModalContent {
+                border: none !important;
+                box-shadow: none !important;
+                max-height: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-200">
+
+    <!-- App Container -->
+    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Top Navigation / Header -->
+        <header class="no-print flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 id="appGreetingTitle" class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
+                        <i class="fa-solid fa-calendar-week text-brand-600 dark:text-brand-500"></i>
+                        <span id="headerGreetingText">Weekly Task Planner</span>
+                    </h1>
+                    <!-- Cloud Sync Status Badge -->
+                    <div id="syncStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        <i id="syncStatusIcon" class="fa-solid fa-rotate animate-spin text-[10px]"></i>
+                        <span id="syncStatusText">Connecting...</span>
+                    </div>
+                </div>
+                <p id="headerSubtext" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cloud-synced bullet-point weekly planner and executive report generator</p>
+            </div>
+
+            <!-- Toolbar Actions -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Date Navigation -->
+                <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 shadow-xs">
+                    <button id="prevWeekBtn" title="Previous Week" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-gray-600 dark:text-gray-300">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button id="thisWeekBtn" class="px-3 py-1 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-gray-700 dark:text-gray-200">
+                        Current Week
+                    </button>
+                    <button id="nextWeekBtn" title="Next Week" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-gray-600 dark:text-gray-300">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Primary Report Button -->
+                <button id="generateReportBtn" class="px-3.5 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice text-amber-300"></i>
+                    <span>Generate Report</span>
+                </button>
+
+                <!-- Bulk Import Button -->
+                <button id="bulkAddBtn" class="px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-brand-500"></i>
+                    <span class="hidden sm:inline">Bulk Points</span>
+                </button>
+
+                <button id="clearCompletedBtn" class="px-3 py-2 bg-white dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-gray-700 dark:text-gray-200 hover:text-rose-600 dark:hover:text-rose-400 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span class="hidden sm:inline">Clear Done</span>
+                </button>
+
+                <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1 hidden sm:block"></div>
+
+                <!-- Personalization Name / Account Button -->
+                <button id="userNameBtn" title="Set or Edit Your Profile" class="px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-circle-user text-brand-500"></i>
+                    <span id="userNameBtnText">Add Name</span>
+                    <i class="fa-solid fa-pen text-[10px] opacity-60"></i>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button id="themeToggleBtn" title="Toggle Dark/Light Mode" class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm transition-colors">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Week Summary & Date Range Banner -->
+        <div class="no-print mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-lg">
+                    <i class="fa-regular fa-calendar-days text-xl"></i>
+                </div>
+                <div>
+                    <h2 id="weekDateRangeText" class="text-base font-semibold text-gray-900 dark:text-white">Loading week...</h2>
+                    <p id="weekStatsText" class="text-xs text-gray-500 dark:text-gray-400">0 tasks total across 7 days</p>
+                </div>
+            </div>
+
+            <!-- Overall Progress Bar -->
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+                <div class="w-full sm:w-64">
+                    <div class="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        <span>Weekly Task Execution</span>
+                        <span id="weeklyProgressPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                        <div id="weeklyProgressBar" class="bg-brand-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7-Day Task Grid -->
+        <main id="weekGrid" class="print-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+            <!-- Day Columns injected via JavaScript -->
+        </main>
+    </div>
+
+    <!-- Name Profile & Sync Account Modal -->
+    <div id="nameModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 rounded-xl">
+                        <i class="fa-solid fa-id-card text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Personal Profile &amp; Sync</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Personalizes report authorship &amp; device sync</p>
+                    </div>
+                </div>
+                <button id="closeNameModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Your Name</label>
+                    <input type="text" id="userNameInput" placeholder="e.g. Alex Morgan" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Role / Job Title (Optional)</label>
+                    <input type="text" id="userTitleInput" placeholder="e.g. Operations Manager / Lead Developer" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <!-- Account / Cloud Sync Details Box -->
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-700/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud text-brand-500"></i> Cloud Sync User ID
+                        </span>
+                        <span id="accountTypeBadge" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                            Cloud Active
+                        </span>
+                    </div>
+                    <div id="displayUserIdText" class="text-[11px] font-mono text-gray-500 dark:text-gray-400 break-all bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                        Initializing auth...
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-2">
+                        Tasks are synced automatically to this unique ID. Enter the same ID or login on another device to share tasks.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="cancelNameBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                <button id="saveNameBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">Save Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Report Generator Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-2 sm:p-4">
+        <div id="reportModalContent" class="bg-white dark:bg-gray-900 rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col max-h-[92vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-gray-200 dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-gradient-to-br from-brand-500 to-indigo-600 text-white rounded-xl shadow-xs">
+                        <i class="fa-solid fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Weekly Executive Productivity Report</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Personalized summary for weekly action points</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="relative inline-block">
+                        <button id="exportReportDropdownBtn" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Report</span>
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                        <div id="exportReportMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 py-1">
+                            <button id="printPdfReportBtn" class="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-rose-500"></i>
+                                <span>Print / Save as PDF</span>
+                            </button>
+                            <button id="downloadHtmlReportBtn" class="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-file-code text-brand-500"></i>
+                                <span>Download HTML File</span>
+                            </button>
+                            <button id="downloadMarkdownReportBtn" class="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-file-lines text-emerald-500"></i>
+                                <span>Copy Markdown Summary</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="closeReportModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content - Report View -->
+            <div id="reportPreviewContainer" class="flex-1 overflow-y-auto pr-1 space-y-6 text-gray-800 dark:text-gray-200 font-sans">
+                <!-- Injected preview report HTML -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Add Modal -->
+    <div id="bulkModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-brand-500"></i>
+                    <span>Bulk Point-Form Import</span>
+                </h3>
+                <button id="closeBulkModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Paste bullet points line by line. Use day prefixes (e.g., <strong>Monday:</strong> Task 1) or select a single day below.
+            </p>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Day (if not specified in line):</label>
+                <select id="bulkTargetDaySelect" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white">
+                    <option value="auto">Auto-detect Day Prefix (e.g., Mon: Buy milk)</option>
+                    <option value="Mon">Monday</option>
+                    <option value="Tue">Tuesday</option>
+                    <option value="Wed">Wednesday</option>
+                    <option value="Thu">Thursday</option>
+                    <option value="Fri">Friday</option>
+                    <option value="Sat">Saturday</option>
+                    <option value="Sun">Sunday</option>
+                </select>
+            </div>
+
+            <textarea id="bulkInputTextarea" class="w-full flex-1 min-h-[180px] p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:outline-none mb-4" placeholder="- Finish sales proposal&#10;- Call electrician&#10;- Buy groceries&#10;&#10;OR&#10;&#10;Monday: Review PRs&#10;Tuesday: Team Sync&#10;Friday: System Backup"></textarea>
+
+            <div class="flex justify-end gap-3">
+                <button id="cancelBulkBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                <button id="saveBulkBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">Add Tasks</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Firebase Script Configuration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global environment variables provided by container or standard fallback
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'weekly-task-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                // Standard default configuration
+                apiKey: "AIzaSyDummyKeyForFallbackSession12345",
+                authDomain: `${appId}.firebaseapp.com`,
+                projectId: appId,
+                storageBucket: `${appId}.appspot.com`,
+                messagingSenderId: "1234567890",
+                appId: "1:1234567890:web:abcdef123456"
+            };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        let state = {
+            currentWeekOffset: 0,
+            tasks: {}, // key: weekKey_dayIndex -> array of task objects
+            userName: localStorage.getItem('wpt_user_name') || '',
+            userTitle: localStorage.getItem('wpt_user_title') || '',
+            theme: localStorage.getItem('wpt_theme') || 'light',
+            userId: null,
+            isCloudActive: false,
+            unsubscribeFirestore: null
+        };
+
+        // Theme Setup
+        if (state.theme === 'dark' || (!('wpt_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            state.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove('dark');
+            state.theme = 'light';
+        }
+
+        // --- Helper Functions ---
+        function getMonday(d) {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function getWeekKey(offset = 0) {
+            const now = new Date();
+            now.setDate(now.getDate() + (offset * 7));
+            const monday = getMonday(now);
+            const yyyy = monday.getFullYear();
+            const mm = String(monday.getMonth() + 1).padStart(2, '0');
+            const dd = String(monday.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getWeekDates(offset = 0) {
+            const now = new Date();
+            now.setDate(now.getDate() + (offset * 7));
+            const monday = getMonday(now);
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + i);
+                dates.push(date);
+            }
+            return dates;
+        }
+
+        function updateSyncBadge(status, text) {
+            const badge = document.getElementById('syncStatusBadge');
+            const icon = document.getElementById('syncStatusIcon');
+            const textEl = document.getElementById('syncStatusText');
+
+            textEl.textContent = text;
+
+            if (status === 'synced') {
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60";
+                icon.className = "fa-solid fa-cloud-check text-[10px]";
+            } else if (status === 'syncing') {
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60";
+                icon.className = "fa-solid fa-rotate animate-spin text-[10px]";
+            } else {
+                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700";
+                icon.className = "fa-solid fa-hard-drive text-[10px]";
+            }
+        }
+
+        function loadLocalDataFallback() {
+            try {
+                const savedTasks = localStorage.getItem('wpt_tasks_v2');
+                if (savedTasks) state.tasks = JSON.parse(savedTasks);
+            } catch (e) {
+                console.error("Local load failed", e);
+            }
+        }
+
+        async function pushDataToCloud() {
+            if (!state.userId || !state.isCloudActive) {
+                localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
+                renderStats();
+                return;
+            }
+
+            updateSyncBadge('syncing', 'Syncing...');
+            
+            try {
+                // Rule 1 Path: /artifacts/{appId}/users/{userId}/plannerData/mainDoc
+                const userDocRef = doc(db, 'artifacts', appId, 'users', state.userId, 'plannerData', 'mainDoc');
+                await setDoc(userDocRef, {
+                    tasks: state.tasks,
+                    userName: state.userName,
+                    userTitle: state.userTitle,
+                    updatedAt: Date.now()
+                }, { merge: true });
+
+                localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
+                updateSyncBadge('synced', 'Synced');
+            } catch (err) {
+                console.warn("Firestore sync write failed, falling back to local:", err);
+                localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
+                updateSyncBadge('offline', 'Saved Locally');
+            }
+            renderStats();
+        }
+
+        function subscribeToFirestoreData() {
+            if (!state.userId) return;
+
+            if (state.unsubscribeFirestore) {
+                state.unsubscribeFirestore();
+            }
+
+            updateSyncBadge('syncing', 'Connecting Cloud...');
+
+            const userDocRef = doc(db, 'artifacts', appId, 'users', state.userId, 'plannerData', 'mainDoc');
+
+            state.unsubscribeFirestore = onSnapshot(
+                userDocRef,
+                (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        if (data.tasks) {
+                            state.tasks = data.tasks;
+                        }
+                        if (data.userName && !state.userName) {
+                            state.userName = data.userName;
+                            localStorage.setItem('wpt_user_name', data.userName);
+                        }
+                        if (data.userTitle && !state.userTitle) {
+                            state.userTitle = data.userTitle;
+                            localStorage.setItem('wpt_user_title', data.userTitle);
+                        }
+                        state.isCloudActive = true;
+                        updateUserProfileUI();
+                        renderPlanner();
+                        updateSyncBadge('synced', 'Synced');
+                    } else {
+                        // First time doc creation, push initial state
+                        state.isCloudActive = true;
+                        pushDataToCloud();
+                    }
+                },
+                (error) => {
+                    console.warn("Firestore subscription notice (using local offline mode):", error);
+                    state.isCloudActive = false;
+                    loadLocalDataFallback();
+                    renderPlanner();
+                    updateSyncBadge('offline', 'Offline / Saved Locally');
+                }
+            );
+        }
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization notice, falling back anonymously or local:", err);
+                try {
+                    await signInAnonymously(auth);
+                } catch (anonErr) {
+                    console.warn("Anonymous login skipped, using local session");
+                }
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                state.userId = user.uid;
+                document.getElementById('displayUserIdText').textContent = user.uid;
+                subscribeToFirestoreData();
+            } else {
+                state.userId = crypto.randomUUID();
+                document.getElementById('displayUserIdText').textContent = `${state.userId} (Local)`;
+                loadLocalDataFallback();
+                renderPlanner();
+                updateSyncBadge('offline', 'Saved Locally');
+            }
+        });
+
+        // --- UI & Planner logic ---
+        function updateUserProfileUI() {
+            const btnText = document.getElementById('userNameBtnText');
+            const headerTitle = document.getElementById('headerGreetingText');
+            
+            if (state.userName.trim()) {
+                btnText.textContent = state.userName;
+                headerTitle.textContent = `Welcome back, ${state.userName}!`;
+                document.title = `${state.userName}'s Weekly Task Planner`;
+            } else {
+                btnText.textContent = "Add Name";
+                headerTitle.textContent = "Weekly Task Planner";
+                document.title = "Weekly Task Planner & Executive Report";
+            }
+        }
+
+        function saveUserProfile(name, title) {
+            state.userName = name.trim();
+            state.userTitle = title.trim();
+            localStorage.setItem('wpt_user_name', state.userName);
+            localStorage.setItem('wpt_user_title', state.userTitle);
+            updateUserProfileUI();
+            pushDataToCloud();
+            showToast(state.userName ? `Profile updated for ${state.userName}` : 'Profile reset', 'success');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-gray-800';
+            toast.className = `${bgClass} text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle'}"></i> <span>${message}</span>`;
+            
+            const container = document.getElementById('toastContainer');
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function renderPlanner() {
+            const weekKey = getWeekKey(state.currentWeekOffset);
+            const weekDates = getWeekDates(state.currentWeekOffset);
+            const weekGrid = document.getElementById('weekGrid');
+            weekGrid.innerHTML = '';
+
+            const startDateStr = weekDates[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const endDateStr = weekDates[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('weekDateRangeText').textContent = `${startDateStr} - ${endDateStr}`;
+
+            const todayStr = new Date().toDateString();
+
+            FULL_DAYS.forEach((dayName, dayIdx) => {
+                const dateObj = weekDates[dayIdx];
+                const dateNum = dateObj.getDate();
+                const isToday = dateObj.toDateString() === todayStr;
+                const dayStorageKey = `${weekKey}_${dayIdx}`;
+                const dayTasks = state.tasks[dayStorageKey] || [];
+
+                const dayCard = document.createElement('div');
+                dayCard.className = `day-card flex flex-col bg-white dark:bg-gray-800 border rounded-xl shadow-xs overflow-hidden transition-all duration-200 ${
+                    isToday ? 'border-brand-500 dark:border-brand-500 ring-2 ring-brand-500/20' : 'border-gray-200 dark:border-gray-700'
+                }`;
+                dayCard.dataset.dayIndex = dayIdx;
+
+                dayCard.innerHTML = `
+                    <div class="px-3.5 py-3 border-b border-gray-100 dark:border-gray-700/60 ${
+                        isToday ? 'bg-brand-50/60 dark:bg-brand-950/20' : 'bg-gray-50/60 dark:bg-gray-800/80'
+                    } flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm text-gray-900 dark:text-white">${dayName}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                isToday 
+                                    ? 'bg-brand-600 text-white' 
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                            }">${dateNum}</span>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 day-task-count">${dayTasks.length}</span>
+                    </div>
+
+                    <!-- Quick Bullet Input -->
+                    <div class="no-print p-2 border-b border-gray-100 dark:border-gray-700/40 bg-gray-50/30 dark:bg-gray-900/20">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-gray-400 text-xs font-bold">•</span>
+                            <input type="text" 
+                                data-day-key="${dayStorageKey}" 
+                                class="task-quick-input w-full pl-6 pr-8 py-1.5 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                                placeholder="Add point & Enter...">
+                            <button class="add-task-btn absolute right-1.5 text-gray-400 hover:text-brand-600 text-xs p-1" title="Add point">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bullet Task Items -->
+                    <div class="task-list flex-1 p-2 space-y-1.5 overflow-y-auto max-h-[460px] min-h-[140px]" data-day-key="${dayStorageKey}">
+                    </div>
+                `;
+
+                const taskListEl = dayCard.querySelector('.task-list');
+                
+                if (dayTasks.length === 0) {
+                    taskListEl.innerHTML = `
+                        <div class="empty-placeholder h-full flex flex-col items-center justify-center text-center p-4 text-gray-300 dark:text-gray-600 text-xs">
+                            <i class="fa-regular fa-clipboard mb-1 text-base opacity-60"></i>
+                            <span>No points set</span>
+                        </div>`;
+                } else {
+                    dayTasks.forEach((task, tIdx) => {
+                        taskListEl.appendChild(createTaskElement(task, dayStorageKey, tIdx));
+                    });
+                }
+
+                setupDropTarget(taskListEl);
+                weekGrid.appendChild(dayCard);
+            });
+
+            setupInputListeners();
+            renderStats();
+        }
+
+        function createTaskElement(task, dayStorageKey, taskIdx) {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = `task-item group relative flex items-start gap-2 p-2 rounded-lg border bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/80 shadow-2xs hover:shadow-xs transition-all ${
+                task.completed ? 'opacity-65 bg-gray-50/80 dark:bg-gray-800/40' : ''
+            }`;
+            taskDiv.draggable = true;
+            taskDiv.dataset.dayKey = dayStorageKey;
+            taskDiv.dataset.taskIdx = taskIdx;
+
+            let priorityBadgeClass = 'hidden';
+            if (task.priority === 'high') priorityBadgeClass = 'bg-rose-500';
+            else if (task.priority === 'medium') priorityBadgeClass = 'bg-amber-500';
+            else if (task.priority === 'low') priorityBadgeClass = 'bg-emerald-500';
+
+            taskDiv.innerHTML = `
+                <div class="priority-dot w-1 h-3.5 rounded-full mt-1 ${priorityBadgeClass}"></div>
+
+                <button class="toggle-check-btn mt-0.5 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                    <i class="${task.completed ? 'fa-solid fa-circle-check text-brand-600 dark:text-brand-500' : 'fa-regular fa-circle'} text-sm"></i>
+                </button>
+
+                <div class="flex-1 min-w-0">
+                    <div class="task-text text-xs leading-relaxed text-gray-800 dark:text-gray-200 break-words cursor-pointer ${
+                        task.completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
+                    }" title="Double click to edit">${escapeHtml(task.text)}</div>
+                </div>
+
+                <div class="no-print opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex items-center gap-1 transition-opacity">
+                    <button class="priority-btn p-1 text-gray-400 hover:text-amber-500 text-xs" title="Set Priority">
+                        <i class="fa-solid fa-flag"></i>
+                    </button>
+                    <button class="move-btn p-1 text-gray-400 hover:text-brand-500 text-xs" title="Move Day">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <button class="delete-btn p-1 text-gray-400 hover:text-rose-500 text-xs" title="Delete">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `;
+
+            taskDiv.addEventListener('dragstart', (e) => {
+                taskDiv.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', JSON.stringify({ dayKey: dayStorageKey, taskIdx }));
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            taskDiv.addEventListener('dragend', () => taskDiv.classList.remove('dragging'));
+
+            taskDiv.querySelector('.toggle-check-btn').addEventListener('click', () => {
+                state.tasks[dayStorageKey][taskIdx].completed = !state.tasks[dayStorageKey][taskIdx].completed;
+                pushDataToCloud();
+                renderPlanner();
+            });
+
+            const textEl = taskDiv.querySelector('.task-text');
+            textEl.addEventListener('dblclick', () => makeTaskEditable(textEl, dayStorageKey, taskIdx));
+
+            taskDiv.querySelector('.priority-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                cyclePriority(dayStorageKey, taskIdx);
+            });
+
+            taskDiv.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                state.tasks[dayStorageKey].splice(taskIdx, 1);
+                pushDataToCloud();
+                renderPlanner();
+            });
+
+            taskDiv.querySelector('.move-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showMoveMenu(e.currentTarget, dayStorageKey, taskIdx);
+            });
+
+            return taskDiv;
+        }
+
+        function makeTaskEditable(textEl, dayStorageKey, taskIdx) {
+            const currentText = state.tasks[dayStorageKey][taskIdx].text;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentText;
+            input.className = 'w-full text-xs bg-white dark:bg-gray-900 border border-brand-500 rounded px-1.5 py-0.5 focus:outline-none';
+
+            textEl.replaceWith(input);
+            input.focus();
+
+            const saveEdit = () => {
+                const val = input.value.trim();
+                if (val) {
+                    state.tasks[dayStorageKey][taskIdx].text = val;
+                }
+                pushDataToCloud();
+                renderPlanner();
+            };
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') saveEdit();
+                if (e.key === 'Escape') renderPlanner();
+            });
+        }
+
+        function cyclePriority(dayStorageKey, taskIdx) {
+            const priorities = [null, 'low', 'medium', 'high'];
+            const current = state.tasks[dayStorageKey][taskIdx].priority || null;
+            const nextIdx = (priorities.indexOf(current) + 1) % priorities.length;
+            state.tasks[dayStorageKey][taskIdx].priority = priorities[nextIdx];
+            pushDataToCloud();
+            renderPlanner();
+        }
+
+        function showMoveMenu(buttonEl, sourceKey, taskIdx) {
+            const existingMenu = document.getElementById('moveMenu');
+            if (existingMenu) existingMenu.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'moveMenu';
+            menu.className = 'fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1 w-36 text-xs';
+            
+            const rect = buttonEl.getBoundingClientRect();
+            menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+            menu.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 150)}px`;
+
+            const currentDayIdx = parseInt(sourceKey.split('_')[1]);
+            const weekKey = getWeekKey(state.currentWeekOffset);
+
+            DAYS.forEach((dayLabel, idx) => {
+                if (idx === currentDayIdx) return;
+                const targetKey = `${weekKey}_${idx}`;
+                const item = document.createElement('button');
+                item.className = 'w-full text-left px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 flex items-center justify-between';
+                item.innerHTML = `<span>Move to ${FULL_DAYS[idx]}</span>`;
+                item.addEventListener('click', () => {
+                    moveTask(sourceKey, taskIdx, targetKey);
+                    menu.remove();
+                });
+                menu.appendChild(item);
+            });
+
+            document.body.appendChild(menu);
+
+            const closeHandler = (e) => {
+                if (!menu.contains(e.target) && e.target !== buttonEl) {
+                    menu.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+
+        function moveTask(sourceKey, taskIdx, targetKey) {
+            if (!state.tasks[sourceKey]) return;
+            const [task] = state.tasks[sourceKey].splice(taskIdx, 1);
+            if (!state.tasks[targetKey]) state.tasks[targetKey] = [];
+            state.tasks[targetKey].push(task);
+            pushDataToCloud();
+            renderPlanner();
+            showToast('Task moved', 'info');
+        }
+
+        function setupDropTarget(container) {
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                container.classList.add('drag-over');
+            });
+
+            container.addEventListener('dragleave', (e) => {
+                if (!container.contains(e.relatedTarget)) {
+                    container.classList.remove('drag-over');
+                }
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                container.classList.remove('drag-over');
+                
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    const targetKey = container.dataset.dayKey;
+                    
+                    if (!data || !data.dayKey) return;
+                    const sourceTask = state.tasks[data.dayKey][data.taskIdx];
+                    if (!sourceTask) return;
+
+                    state.tasks[data.dayKey].splice(data.taskIdx, 1);
+                    if (!state.tasks[targetKey]) state.tasks[targetKey] = [];
+                    state.tasks[targetKey].push(sourceTask);
+
+                    pushDataToCloud();
+                    renderPlanner();
+                } catch (err) {
+                    console.error("Drop error", err);
+                }
+            });
+        }
+
+        function setupInputListeners() {
+            document.querySelectorAll('.task-quick-input').forEach(input => {
+                const addBtn = input.nextElementSibling;
+                
+                const addHandler = () => {
+                    const rawVal = input.value.trim();
+                    if (!rawVal) return;
+
+                    const dayKey = input.dataset.dayKey;
+                    if (!state.tasks[dayKey]) state.tasks[dayKey] = [];
+
+                    const lines = rawVal.split(/\r?\n/).map(l => l.replace(/^[-*•\d+.]\s*/, '').trim()).filter(Boolean);
+                    
+                    lines.forEach(lineText => {
+                        state.tasks[dayKey].push({
+                            text: lineText,
+                            completed: false,
+                            priority: null,
+                            createdAt: Date.now()
+                        });
+                    });
+
+                    input.value = '';
+                    pushDataToCloud();
+                    renderPlanner();
+                };
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') addHandler();
+                });
+
+                if (addBtn) addBtn.addEventListener('click', addHandler);
+            });
+        }
+
+        function renderStats() {
+            const weekKey = getWeekKey(state.currentWeekOffset);
+            let total = 0;
+            let completed = 0;
+
+            for (let i = 0; i < 7; i++) {
+                const dayKey = `${weekKey}_${i}`;
+                const list = state.tasks[dayKey] || [];
+                total += list.length;
+                completed += list.filter(t => t.completed).length;
+            }
+
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('weeklyProgressPercent').textContent = `${percent}%`;
+            document.getElementById('weeklyProgressBar').style.width = `${percent}%`;
+            document.getElementById('weekStatsText').textContent = `${total} task${total === 1 ? '' : 's'} total across week • ${completed} completed`;
+        }
+
+        function generateExecutiveReport() {
+            const weekKey = getWeekKey(state.currentWeekOffset);
+            const weekDates = getWeekDates(state.currentWeekOffset);
+            
+            let totalTasks = 0;
+            let completedTasks = 0;
+            let highPriorityCount = 0;
+            let dayBreakdown = [];
+            let highPriorityList = [];
+
+            FULL_DAYS.forEach((dayName, idx) => {
+                const dayKey = `${weekKey}_${idx}`;
+                const tasks = state.tasks[dayKey] || [];
+                const count = tasks.length;
+                const done = tasks.filter(t => t.completed).length;
+                
+                totalTasks += count;
+                completedTasks += done;
+
+                tasks.forEach(t => {
+                    if (t.priority === 'high') {
+                        highPriorityCount++;
+                        highPriorityList.push({ day: dayName, task: t });
+                    }
+                });
+
+                dayBreakdown.push({
+                    day: dayName,
+                    date: weekDates[idx].toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    total: count,
+                    completed: done,
+                    percent: count > 0 ? Math.round((done / count) * 100) : 0,
+                    tasks
+                });
+            });
+
+            const score = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const startDateStr = weekDates[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const endDateStr = weekDates[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const authorName = state.userName.trim() || 'Team Member';
+            const authorTitle = state.userTitle.trim() || 'Operations & Task Exec';
+
+            const previewContainer = document.getElementById('reportPreviewContainer');
+            
+            previewContainer.innerHTML = `
+                <!-- Executive Header -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 mb-1">Executive Productivity Summary</div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">${escapeHtml(authorName)}'s Weekly Report</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Role: ${escapeHtml(authorTitle)} • Synced via Cloud ID</p>
+                    </div>
+                    <div class="bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 rounded-xl p-3 text-right">
+                        <div class="text-xs font-semibold text-brand-700 dark:text-brand-300">Reporting Period</div>
+                        <div class="text-sm font-bold text-gray-900 dark:text-white">${startDateStr} – ${endDateStr}</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">Prepared by: <strong>${escapeHtml(authorName)}</strong></div>
+                    </div>
+                </div>
+
+                <!-- Productivity Metrics Banner -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-brand-500 to-indigo-600 text-white rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                        <span class="text-xs font-semibold opacity-80 uppercase tracking-wide">Execution Rate</span>
+                        <div class="flex items-baseline gap-2 my-1">
+                            <span class="text-3xl font-black">${score}%</span>
+                            <span class="text-xs font-medium opacity-90">${completedTasks}/${totalTasks} Tasks</span>
+                        </div>
+                        <div class="w-full bg-white/30 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-white h-1.5 rounded-full" style="width: ${score}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Completed Deliverables</span>
+                        <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 my-1">${completedTasks}</div>
+                        <span class="text-[11px] text-gray-400">Action items resolved</span>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pending Action Points</span>
+                        <div class="text-2xl font-bold text-amber-500 my-1">${totalTasks - completedTasks}</div>
+                        <span class="text-[11px] text-gray-400">Carried over / pending</span>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">High Priority Items</span>
+                        <div class="text-2xl font-bold text-rose-500 my-1">${highPriorityCount}</div>
+                        <span class="text-[11px] text-gray-400">Flagged milestones</span>
+                    </div>
+                </div>
+
+                <!-- Executive Synthesis Box -->
+                <div class="bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800/60 rounded-xl p-4 mb-6">
+                    <h4 class="text-xs font-bold text-brand-800 dark:text-brand-300 uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i> Executive Synthesis
+                    </h4>
+                    <p class="text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                        This report summarizes task completion for <strong>${escapeHtml(authorName)}</strong> during the period of <strong>${startDateStr} to ${endDateStr}</strong>. Out of <strong>${totalTasks} bullet points</strong> logged across the week, <strong>${completedTasks} were completed</strong>, resulting in an execution score of <strong>${score}%</strong>.
+                    </p>
+                </div>
+
+                <!-- High Priority Deliverables Table -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-flag text-rose-500"></i> High-Priority Deliverables
+                    </h3>
+                    ${highPriorityList.length === 0 ? `
+                        <p class="text-xs text-gray-400 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">No high-priority flags marked for this week.</p>
+                    ` : `
+                        <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold border-b border-gray-200 dark:border-gray-700">
+                                    <tr>
+                                        <th class="p-2.5">Day</th>
+                                        <th class="p-2.5">Priority Task</th>
+                                        <th class="p-2.5">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                    ${highPriorityList.map(item => `
+                                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
+                                            <td class="p-2.5 font-semibold text-gray-900 dark:text-white">${item.day}</td>
+                                            <td class="p-2.5 text-gray-800 dark:text-gray-200">${escapeHtml(item.task.text)}</td>
+                                            <td class="p-2.5">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                    item.task.completed 
+                                                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' 
+                                                        : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                                                }">
+                                                    ${item.task.completed ? 'Completed' : 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+
+                <!-- Daily Breakdown -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-day text-brand-500"></i> Daily Task Breakdown
+                    </h3>
+                    <div class="space-y-3">
+                        ${dayBreakdown.map(d => `
+                            <div class="p-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-xs text-gray-900 dark:text-white">${d.day} (${d.date})</span>
+                                        <span class="text-[10px] font-semibold text-gray-400">(${d.completed}/${d.total} Done)</span>
+                                    </div>
+                                    <span class="text-xs font-bold ${d.percent === 100 ? 'text-emerald-600' : 'text-brand-600 dark:text-brand-400'}">${d.percent}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-2 overflow-hidden">
+                                    <div class="bg-brand-500 h-1.5 rounded-full" style="width: ${d.percent}%"></div>
+                                </div>
+                                ${d.tasks.length === 0 ? `
+                                    <p class="text-[11px] text-gray-400 italic">No tasks logged.</p>
+                                ` : `
+                                    <ul class="space-y-1 mt-2 pl-2">
+                                        ${d.tasks.map(t => `
+                                            <li class="text-xs flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                                <i class="${t.completed ? 'fa-solid fa-check text-emerald-500' : 'fa-regular fa-circle text-gray-400'} text-[10px]"></i>
+                                                <span class="${t.completed ? 'line-through opacity-60' : ''}">${escapeHtml(t.text)}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                `}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Sign-off Block -->
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-4 mt-6">
+                    <div class="flex flex-col sm:flex-row justify-between gap-4 text-xs text-gray-500">
+                        <div>
+                            <strong>Prepared By:</strong> ${escapeHtml(authorName)} (${escapeHtml(authorTitle)})<br>
+                            <span>Date: ${new Date().toLocaleDateString()}</span>
+                        </div>
+                        <div class="sm:text-right">
+                            <strong>Cloud User ID:</strong> <span class="font-mono text-[10px]">${state.userId || 'Local'}</span><br>
+                            <span>Weekly Task System</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function downloadHtmlReport() {
+            const reportContent = document.getElementById('reportPreviewContainer').innerHTML;
+            const authorName = state.userName.trim() || 'User';
+            
+            const fullHtml = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>${escapeHtml(authorName)} - Weekly Executive Report</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            </head>
+            <body class="bg-white text-gray-900 p-8 max-w-4xl mx-auto font-sans">
+                ${reportContent}
+            </body>
+            </html>`;
+
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `weekly_report_${authorName.toLowerCase().replace(/\s+/g, '_')}_${getWeekKey(state.currentWeekOffset)}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Executive HTML Report downloaded', 'success');
+        }
+
+        function copyMarkdownReport() {
+            const weekKey = getWeekKey(state.currentWeekOffset);
+            const weekDates = getWeekDates(state.currentWeekOffset);
+            const authorName = state.userName.trim() || 'User';
+            const authorTitle = state.userTitle.trim() || 'Team Member';
+
+            let md = `# Weekly Executive Task Report\n`;
+            md += `**Prepared By:** ${authorName} (${authorTitle})\n`;
+            md += `**Period:** ${weekDates[0].toDateString()} - ${weekDates[6].toDateString()}\n\n`;
+
+            FULL_DAYS.forEach((day, idx) => {
+                const dayKey = `${weekKey}_${idx}`;
+                const tasks = state.tasks[dayKey] || [];
+                md += `### ${day}\n`;
+                if (tasks.length === 0) {
+                    md += `*No tasks logged*\n`;
+                } else {
+                    tasks.forEach(t => {
+                        md += `- [${t.completed ? 'x' : ' '}] ${t.text}${t.priority ? ` (${t.priority.toUpperCase()})` : ''}\n`;
+                    });
+                }
+                md += `\n`;
+            });
+
+            document.addEventListener('copy', function handler(e) {
+                e.clipboardData.setData('text/plain', md);
+                e.preventDefault();
+                document.removeEventListener('copy', handler);
+            });
+            document.execCommand('copy');
+            showToast('Markdown report copied to clipboard', 'success');
+        }
+
+        function handleBulkInsert() {
+            const text = document.getElementById('bulkInputTextarea').value;
+            const targetChoice = document.getElementById('bulkTargetDaySelect').value;
+            const currentWeekKey = getWeekKey(state.currentWeekOffset);
+
+            if (!text.trim()) {
+                showToast('Please enter text to import', 'error');
+                return;
+            }
+
+            const lines = text.split(/\r?\n/);
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+                if (!cleanLine) return;
+
+                cleanLine = cleanLine.replace(/^[-*•\d+.]\s*/, '').trim();
+                if (!cleanLine) return;
+
+                let dayIdx = 0;
+
+                if (targetChoice !== 'auto') {
+                    dayIdx = DAYS.indexOf(targetChoice);
+                } else {
+                    let matched = false;
+                    for (let i = 0; i < 7; i++) {
+                        const reg = new RegExp(`^(${DAYS[i]}|${FULL_DAYS[i]})\\s*[:\\-]?\\s*`, 'i');
+                        if (reg.test(cleanLine)) {
+                            dayIdx = i;
+                            cleanLine = cleanLine.replace(reg, '').trim();
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) dayIdx = 0;
+                }
+
+                if (!cleanLine) return;
+
+                const dayStorageKey = `${currentWeekKey}_${dayIdx}`;
+                if (!state.tasks[dayStorageKey]) state.tasks[dayStorageKey] = [];
+
+                state.tasks[dayStorageKey].push({
+                    text: cleanLine,
+                    completed: false,
+                    priority: null,
+                    createdAt: Date.now()
+                });
+                addedCount++;
+            });
+
+            pushDataToCloud();
+            renderPlanner();
+            document.getElementById('bulkModal').classList.add('hidden');
+            document.getElementById('bulkInputTextarea').value = '';
+            showToast(`Added ${addedCount} point${addedCount === 1 ? '' : 's'} to week`, 'success');
+        }
+
+        function clearCompleted() {
+            const weekKey = getWeekKey(state.currentWeekOffset);
+            let clearedCount = 0;
+
+            for (let i = 0; i < 7; i++) {
+                const dayKey = `${weekKey}_${i}`;
+                if (state.tasks[dayKey]) {
+                    const before = state.tasks[dayKey].length;
+                    state.tasks[dayKey] = state.tasks[dayKey].filter(t => !t.completed);
+                    clearedCount += (before - state.tasks[dayKey].length);
+                }
+            }
+
+            if (clearedCount > 0) {
+                pushDataToCloud();
+                renderPlanner();
+                showToast(`Cleared ${clearedCount} completed task${clearedCount === 1 ? '' : 's'}`, 'info');
+            } else {
+                showToast('No completed tasks to clear', 'info');
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+            updateUserProfileUI();
+            renderPlanner();
+
+            // Week Navigation
+            document.getElementById('prevWeekBtn').addEventListener('click', () => {
+                state.currentWeekOffset--;
+                renderPlanner();
+            });
+
+            document.getElementById('nextWeekBtn').addEventListener('click', () => {
+                state.currentWeekOffset++;
+                renderPlanner();
+            });
+
+            document.getElementById('thisWeekBtn').addEventListener('click', () => {
+                state.currentWeekOffset = 0;
+                renderPlanner();
+            });
+
+            // Name / Profile Modal Controls
+            const nameModal = document.getElementById('nameModal');
+            const userNameInput = document.getElementById('userNameInput');
+            const userTitleInput = document.getElementById('userTitleInput');
+
+            document.getElementById('userNameBtn').addEventListener('click', () => {
+                userNameInput.value = state.userName;
+                userTitleInput.value = state.userTitle;
+                nameModal.classList.remove('hidden');
+                userNameInput.focus();
+            });
+
+            document.getElementById('closeNameModalBtn').addEventListener('click', () => nameModal.classList.add('hidden'));
+            document.getElementById('cancelNameBtn').addEventListener('click', () => nameModal.classList.add('hidden'));
+
+            document.getElementById('saveNameBtn').addEventListener('click', () => {
+                saveUserProfile(userNameInput.value, userTitleInput.value);
+                nameModal.classList.add('hidden');
+            });
+
+            userNameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveUserProfile(userNameInput.value, userTitleInput.value);
+                    nameModal.classList.add('hidden');
+                }
+            });
+
+            // Executive Report Generator Trigger
+            document.getElementById('generateReportBtn').addEventListener('click', generateExecutiveReport);
+
+            // Report Modal Controls
+            const reportModal = document.getElementById('reportModal');
+            document.getElementById('closeReportModalBtn').addEventListener('click', () => reportModal.classList.add('hidden'));
+
+            // Report Export Menu Toggle
+            const exportReportDropdownBtn = document.getElementById('exportReportDropdownBtn');
+            const exportReportMenu = document.getElementById('exportReportMenu');
+
+            exportReportDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportReportMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', () => exportReportMenu.classList.add('hidden'));
+
+            document.getElementById('printPdfReportBtn').addEventListener('click', () => window.print());
+            document.getElementById('downloadHtmlReportBtn').addEventListener('click', downloadHtmlReport);
+            document.getElementById('downloadMarkdownReportBtn').addEventListener('click', copyMarkdownReport);
+
+            // Theme Toggle
+            document.getElementById('themeToggleBtn').addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                state.theme = isDark ? 'dark' : 'light';
+                localStorage.setItem('wpt_theme', state.theme);
+            });
+
+            // Bulk Add Modal
+            const bulkModal = document.getElementById('bulkModal');
+            document.getElementById('bulkAddBtn').addEventListener('click', () => bulkModal.classList.remove('hidden'));
+            document.getElementById('closeBulkModalBtn').addEventListener('click', () => bulkModal.classList.add('hidden'));
+            document.getElementById('cancelBulkBtn').addEventListener('click', () => bulkModal.classList.add('hidden'));
+            document.getElementById('saveBulkBtn').addEventListener('click', handleBulkInsert);
+
+            // Toolbar Actions
+            document.getElementById('clearCompletedBtn').addEventListener('click', clearCompleted);
+        });
+    </script>
+</body>
+</html>
