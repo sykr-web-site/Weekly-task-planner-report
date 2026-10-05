@@ -145,11 +145,11 @@
 
                 <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
-                <!-- Personalization Name / Account Button -->
-                <button id="userNameBtn" title="Set or Edit Your Profile" class="px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-circle-user text-brand-500"></i>
-                    <span id="userNameBtnText">Add Name</span>
-                    <i class="fa-solid fa-pen text-[10px] opacity-60"></i>
+                <!-- Log In & Sync Hub Button -->
+                <button id="userNameBtn" title="Log In or Sync Account" class="px-3 py-2 bg-white dark:bg-gray-800 hover:bg-brand-50 dark:hover:bg-brand-950/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-brand-500"></i>
+                    <span id="userNameBtnText">Sync / Log In</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] opacity-60"></i>
                 </button>
 
                 <!-- Theme Toggle -->
@@ -192,17 +192,17 @@
         </main>
     </div>
 
-    <!-- Name Profile & Sync Account Modal -->
+    <!-- Log In, Sync & Profile Hub Modal -->
     <div id="nameModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
                 <div class="flex items-center gap-3">
                     <div class="p-2.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 rounded-xl">
-                        <i class="fa-solid fa-id-card text-lg"></i>
+                        <i class="fa-solid fa-arrows-rotate text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Personal Profile &amp; Sync</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Personalizes report authorship &amp; device sync</p>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Account &amp; Cloud Sync</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Sync tasks across phones, tablets &amp; desktop</p>
                     </div>
                 </div>
                 <button id="closeNameModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg">
@@ -210,39 +210,123 @@
                 </button>
             </div>
 
-            <div class="space-y-4">
+            <!-- Tab Switcher -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-5">
+                <button id="tabSyncBtn" class="flex-1 py-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud"></i> Sync Methods
+                </button>
+                <button id="tabProfileBtn" class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-gear"></i> Personal Profile
+                </button>
+            </div>
+
+            <!-- TAB 1: Sync Options -->
+            <div id="tabContentSync" class="space-y-4">
+                <!-- SSO Social Logins (Google & Microsoft) -->
+                <div class="bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-900/60 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-brand-500"></i> One-Click Social Sign-In
+                    </h4>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-3">Sign in with your work or personal account to back up and sync tasks anywhere.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Google Sign In -->
+                        <button id="googleSignInBtn" class="w-full py-2.5 px-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors">
+                            <i class="fa-brands fa-google text-rose-500 text-sm"></i>
+                            <span>Google</span>
+                        </button>
+
+                        <!-- Microsoft Sign In -->
+                        <button id="microsoftSignInBtn" class="w-full py-2.5 px-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors">
+                            <i class="fa-brands fa-microsoft text-sky-500 text-sm"></i>
+                            <span>Microsoft</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Email / Password Authentication -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-envelope text-brand-500"></i> Email &amp; Password Login
+                    </h4>
+                    <div class="space-y-3">
+                        <div>
+                            <input type="email" id="authEmailInput" placeholder="name@example.com" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <input type="password" id="authPasswordInput" placeholder="Password (6+ chars)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <button id="emailSignInBtn" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition-colors">
+                                Log In
+                            </button>
+                            <button id="emailSignUpBtn" class="flex-1 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors">
+                                Register
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Sync Key Field -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-key text-amber-500"></i> Link Existing Sync Key / User ID
+                    </h4>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">Have a User ID from another device? Enter it below to load its tasks.</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="manualSyncKeyInput" placeholder="Paste User ID key..." class="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <button id="applySyncKeyBtn" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-colors">
+                            Link ID
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Active Sync Key Box -->
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-700/80">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved text-brand-500"></i> Active Sync ID
+                        </span>
+                        <button id="copyUserIdBtn" class="text-[10px] text-brand-600 dark:text-brand-400 hover:underline font-bold flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> Copy Key
+                        </button>
+                    </div>
+                    <div id="displayUserIdText" class="text-[11px] font-mono text-gray-600 dark:text-gray-300 break-all bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                        Initializing auth...
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Personal Profile Details -->
+            <div id="tabContentProfile" class="hidden space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Your Name</label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Your Full Name</label>
                     <input type="text" id="userNameInput" placeholder="e.g. Alex Morgan" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Role / Job Title (Optional)</label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Role / Job Title</label>
                     <input type="text" id="userTitleInput" placeholder="e.g. Operations Manager / Lead Developer" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
 
-                <!-- Account / Cloud Sync Details Box -->
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-700/80">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-cloud text-brand-500"></i> Cloud Sync User ID
-                        </span>
-                        <span id="accountTypeBadge" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
-                            Cloud Active
-                        </span>
-                    </div>
-                    <div id="displayUserIdText" class="text-[11px] font-mono text-gray-500 dark:text-gray-400 break-all bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
-                        Initializing auth...
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-2">
-                        Tasks are synced automatically to this unique ID. Enter the same ID or login on another device to share tasks.
-                    </p>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    This profile information appears at the top of your weekly planner and automatically formats your downloadable Executive Summary Reports.
+                </p>
+
+                <div class="pt-2">
+                    <button id="saveProfileTabBtn" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition-colors">
+                        Save Profile Details
+                    </button>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 mt-6">
-                <button id="cancelNameBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">Cancel</button>
-                <button id="saveNameBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">Save Profile</button>
+            <div class="flex justify-between items-center mt-6 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <button id="signOutUserBtn" class="text-xs text-rose-500 hover:underline font-semibold flex items-center gap-1 hidden">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                </button>
+                <div class="ml-auto">
+                    <button id="closeModalBottomBtn" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">Done</button>
+                </div>
             </div>
         </div>
     </div>
@@ -340,28 +424,33 @@
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- Firebase Script Configuration -->
+    <!-- Firebase Module Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
             signInAnonymously, 
             signInWithCustomToken, 
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            GoogleAuthProvider,
+            OAuthProvider,
+            signInWithPopup,
+            signOut,
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
             setDoc, 
+            getDoc,
             onSnapshot 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global environment variables provided by container or standard fallback
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'weekly-task-app';
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
-                // Standard default configuration
                 apiKey: "AIzaSyDummyKeyForFallbackSession12345",
                 authDomain: `${appId}.firebaseapp.com`,
                 projectId: appId,
@@ -379,7 +468,7 @@
 
         let state = {
             currentWeekOffset: 0,
-            tasks: {}, // key: weekKey_dayIndex -> array of task objects
+            tasks: {},
             userName: localStorage.getItem('wpt_user_name') || '',
             userTitle: localStorage.getItem('wpt_user_title') || '',
             theme: localStorage.getItem('wpt_theme') || 'light',
@@ -388,7 +477,7 @@
             unsubscribeFirestore: null
         };
 
-        // Theme Setup
+        // Theme Initialization
         if (state.theme === 'dark' || (!('wpt_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
             state.theme = 'dark';
@@ -397,7 +486,7 @@
             state.theme = 'light';
         }
 
-        // --- Helper Functions ---
+        // Helper Functions
         function getMonday(d) {
             d = new Date(d);
             const day = d.getDay();
@@ -452,12 +541,12 @@
                 const savedTasks = localStorage.getItem('wpt_tasks_v2');
                 if (savedTasks) state.tasks = JSON.parse(savedTasks);
             } catch (e) {
-                console.error("Local load failed", e);
+                console.error("Local load error", e);
             }
         }
 
         async function pushDataToCloud() {
-            if (!state.userId || !state.isCloudActive) {
+            if (!state.userId) {
                 localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
                 renderStats();
                 return;
@@ -466,7 +555,7 @@
             updateSyncBadge('syncing', 'Syncing...');
             
             try {
-                // Rule 1 Path: /artifacts/{appId}/users/{userId}/plannerData/mainDoc
+                /* STRICT RULE 1 PATH: /artifacts/{appId}/users/{userId}/plannerData/mainDoc */
                 const userDocRef = doc(db, 'artifacts', appId, 'users', state.userId, 'plannerData', 'mainDoc');
                 await setDoc(userDocRef, {
                     tasks: state.tasks,
@@ -478,7 +567,7 @@
                 localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
                 updateSyncBadge('synced', 'Synced');
             } catch (err) {
-                console.warn("Firestore sync write failed, falling back to local:", err);
+                console.warn("Firestore save fallback to local:", err);
                 localStorage.setItem('wpt_tasks_v2', JSON.stringify(state.tasks));
                 updateSyncBadge('offline', 'Saved Locally');
             }
@@ -517,17 +606,16 @@
                         renderPlanner();
                         updateSyncBadge('synced', 'Synced');
                     } else {
-                        // First time doc creation, push initial state
                         state.isCloudActive = true;
                         pushDataToCloud();
                     }
                 },
                 (error) => {
-                    console.warn("Firestore subscription notice (using local offline mode):", error);
+                    console.warn("Firestore read notice:", error);
                     state.isCloudActive = false;
                     loadLocalDataFallback();
                     renderPlanner();
-                    updateSyncBadge('offline', 'Offline / Saved Locally');
+                    updateSyncBadge('offline', 'Saved Locally');
                 }
             );
         }
@@ -536,34 +624,38 @@
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
+                } else if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.warn("Auth initialization notice, falling back anonymously or local:", err);
-                try {
-                    await signInAnonymously(auth);
-                } catch (anonErr) {
-                    console.warn("Anonymous login skipped, using local session");
+                console.warn("Auth initial setup notice:", err);
+                if (!auth.currentUser) {
+                    try { await signInAnonymously(auth); } catch(e){}
                 }
             }
         }
 
         onAuthStateChanged(auth, (user) => {
+            const signOutBtn = document.getElementById('signOutUserBtn');
             if (user) {
                 state.userId = user.uid;
                 document.getElementById('displayUserIdText').textContent = user.uid;
+                if (!user.isAnonymous) {
+                    signOutBtn.classList.remove('hidden');
+                } else {
+                    signOutBtn.classList.add('hidden');
+                }
                 subscribeToFirestoreData();
             } else {
-                state.userId = crypto.randomUUID();
-                document.getElementById('displayUserIdText').textContent = `${state.userId} (Local)`;
+                state.userId = localStorage.getItem('wpt_custom_sync_key') || crypto.randomUUID();
+                document.getElementById('displayUserIdText').textContent = `${state.userId} (Guest Key)`;
+                signOutBtn.classList.add('hidden');
                 loadLocalDataFallback();
                 renderPlanner();
                 updateSyncBadge('offline', 'Saved Locally');
             }
         });
 
-        // --- UI & Planner logic ---
         function updateUserProfileUI() {
             const btnText = document.getElementById('userNameBtnText');
             const headerTitle = document.getElementById('headerGreetingText');
@@ -573,7 +665,7 @@
                 headerTitle.textContent = `Welcome back, ${state.userName}!`;
                 document.title = `${state.userName}'s Weekly Task Planner`;
             } else {
-                btnText.textContent = "Add Name";
+                btnText.textContent = "Sync / Log In";
                 headerTitle.textContent = "Weekly Task Planner";
                 document.title = "Weekly Task Planner & Executive Report";
             }
@@ -586,7 +678,7 @@
             localStorage.setItem('wpt_user_title', state.userTitle);
             updateUserProfileUI();
             pushDataToCloud();
-            showToast(state.userName ? `Profile updated for ${state.userName}` : 'Profile reset', 'success');
+            showToast(state.userName ? `Profile updated for ${state.userName}` : 'Profile saved', 'success');
         }
 
         function showToast(message, type = 'info') {
@@ -1306,7 +1398,7 @@
                 renderPlanner();
             });
 
-            // Name / Profile Modal Controls
+            // Account & Log In Modal Controls
             const nameModal = document.getElementById('nameModal');
             const userNameInput = document.getElementById('userNameInput');
             const userTitleInput = document.getElementById('userTitleInput');
@@ -1315,28 +1407,127 @@
                 userNameInput.value = state.userName;
                 userTitleInput.value = state.userTitle;
                 nameModal.classList.remove('hidden');
-                userNameInput.focus();
             });
 
             document.getElementById('closeNameModalBtn').addEventListener('click', () => nameModal.classList.add('hidden'));
-            document.getElementById('cancelNameBtn').addEventListener('click', () => nameModal.classList.add('hidden'));
+            document.getElementById('closeModalBottomBtn').addEventListener('click', () => nameModal.classList.add('hidden'));
 
-            document.getElementById('saveNameBtn').addEventListener('click', () => {
+            // Sync vs Profile Modal Tabs
+            const tabSyncBtn = document.getElementById('tabSyncBtn');
+            const tabProfileBtn = document.getElementById('tabProfileBtn');
+            const tabContentSync = document.getElementById('tabContentSync');
+            const tabContentProfile = document.getElementById('tabContentProfile');
+
+            tabSyncBtn.addEventListener('click', () => {
+                tabSyncBtn.className = "flex-1 py-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 flex items-center justify-center gap-2";
+                tabProfileBtn.className = "flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center gap-2";
+                tabContentSync.classList.remove('hidden');
+                tabContentProfile.classList.add('hidden');
+            });
+
+            tabProfileBtn.addEventListener('click', () => {
+                tabProfileBtn.className = "flex-1 py-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 flex items-center justify-center gap-2";
+                tabSyncBtn.className = "flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center gap-2";
+                tabContentProfile.classList.remove('hidden');
+                tabContentSync.classList.add('hidden');
+            });
+
+            document.getElementById('saveProfileTabBtn').addEventListener('click', () => {
                 saveUserProfile(userNameInput.value, userTitleInput.value);
                 nameModal.classList.add('hidden');
             });
 
-            userNameInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    saveUserProfile(userNameInput.value, userTitleInput.value);
-                    nameModal.classList.add('hidden');
+            // Authentication Action Handlers (Google, Microsoft, Email, Key Link)
+            document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(auth, provider);
+                    if (result.user.displayName && !state.userName) {
+                        saveUserProfile(result.user.displayName, state.userTitle);
+                    }
+                    showToast(`Signed in as ${result.user.displayName || result.user.email}`, 'success');
+                } catch (err) {
+                    showToast('Google login notice: Defaulting to key sync', 'info');
                 }
             });
 
-            // Executive Report Generator Trigger
+            document.getElementById('microsoftSignInBtn').addEventListener('click', async () => {
+                try {
+                    const provider = new OAuthProvider('microsoft.com');
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
+                    });
+                    const result = await signInWithPopup(auth, provider);
+                    if (result.user.displayName && !state.userName) {
+                        saveUserProfile(result.user.displayName, state.userTitle);
+                    }
+                    showToast(`Signed in as ${result.user.displayName || result.user.email}`, 'success');
+                } catch (err) {
+                    showToast('Microsoft login notice: Fallback to Key Sync', 'info');
+                }
+            });
+
+            document.getElementById('emailSignInBtn').addEventListener('click', async () => {
+                const email = document.getElementById('authEmailInput').value.trim();
+                const pass = document.getElementById('authPasswordInput').value;
+                if (!email || !pass) return showToast('Please fill email and password', 'error');
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                    showToast('Logged in successfully', 'success');
+                } catch (err) {
+                    showToast(err.message || 'Login failed', 'error');
+                }
+            });
+
+            document.getElementById('emailSignUpBtn').addEventListener('click', async () => {
+                const email = document.getElementById('authEmailInput').value.trim();
+                const pass = document.getElementById('authPasswordInput').value;
+                if (!email || !pass || pass.length < 6) return showToast('Password must be 6+ characters', 'error');
+
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                    showToast('Account created and synced', 'success');
+                } catch (err) {
+                    showToast(err.message || 'Registration failed', 'error');
+                }
+            });
+
+            // Link Custom Sync Key / User ID
+            document.getElementById('applySyncKeyBtn').addEventListener('click', () => {
+                const customKey = document.getElementById('manualSyncKeyInput').value.trim();
+                if (!customKey) return showToast('Please enter a valid User ID', 'error');
+
+                state.userId = customKey;
+                localStorage.setItem('wpt_custom_sync_key', customKey);
+                document.getElementById('displayUserIdText').textContent = `${customKey} (Custom Sync)`;
+                subscribeToFirestoreData();
+                showToast(`Switched to Sync Key: ${customKey.substring(0, 8)}...`, 'success');
+            });
+
+            // Copy User ID Button
+            document.getElementById('copyUserIdBtn').addEventListener('click', () => {
+                const uid = state.userId || '';
+                document.addEventListener('copy', function handler(e) {
+                    e.clipboardData.setData('text/plain', uid);
+                    e.preventDefault();
+                    document.removeEventListener('copy', handler);
+                });
+                document.execCommand('copy');
+                showToast('Sync Key copied to clipboard', 'success');
+            });
+
+            // Sign Out Button
+            document.getElementById('signOutUserBtn').addEventListener('click', async () => {
+                await signOut(auth);
+                localStorage.removeItem('wpt_custom_sync_key');
+                await signInAnonymously(auth);
+                showToast('Signed out. Reset to new guest session.', 'info');
+            });
+
+            // Executive Report Modal Controls
             document.getElementById('generateReportBtn').addEventListener('click', generateExecutiveReport);
 
-            // Report Modal Controls
             const reportModal = document.getElementById('reportModal');
             document.getElementById('closeReportModalBtn').addEventListener('click', () => reportModal.classList.add('hidden'));
 
